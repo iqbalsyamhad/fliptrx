@@ -6,16 +6,20 @@
  * @flow
  */
 
-import React from 'react';
+import React, {Component} from 'react';
 import {
   SafeAreaView,
   StyleSheet,
+  ActivityIndicator,
+  FlatList,
   ScrollView,
   View,
+  TouchableOpacity,
+  Button,
+  TextInput,
   Text,
   StatusBar,
 } from 'react-native';
-
 import {
   Header,
   LearnMoreLinks,
@@ -23,56 +27,85 @@ import {
   DebugInstructions,
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
+import SearchInput, { createFilter } from 'react-native-search-filter';
+import Trxcard from './component/card/trxcard';
 
-const App: () => React$Node = () => {
-  return (
-    <>
-      <StatusBar barStyle="dark-content" />
-      <SafeAreaView>
-        <ScrollView
-          contentInsetAdjustmentBehavior="automatic"
-          style={styles.scrollView}>
-          <Header />
-          {global.HermesInternal == null ? null : (
-            <View style={styles.engine}>
-              <Text style={styles.footer}>Engine: Hermes</Text>
-            </View>
-          )}
-          <View style={styles.body}>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Step One</Text>
-              <Text style={styles.sectionDescription}>
-                Edit <Text style={styles.highlight}>App.js</Text> to change this
-                screen and then come back to see your edits.
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>See Your Changes</Text>
-              <Text style={styles.sectionDescription}>
-                <ReloadInstructions />
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Debug</Text>
-              <Text style={styles.sectionDescription}>
-                <DebugInstructions />
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Learn More</Text>
-              <Text style={styles.sectionDescription}>
-                Read the docs to discover what to do next:
-              </Text>
-            </View>
-            <LearnMoreLinks />
+const KEYS_TO_FILTERS = ['beneficiary_name'];
+
+export default class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      trxs:[],
+      searchText: ''
+    }
+  }
+
+  _isMounted = false;
+  componentDidMount() {
+    this._isMounted = true;
+
+    fetch('https://nextar.flip.id/frontend-test')
+    .then((response) => response.json())
+    .then((responseJson) => {
+      if (this._isMounted) {
+        //this.setState({trxs: responseJson});
+        //this.setState({trxs: Object.keys(responseJson)});
+
+        let array = [];
+        for (const trx in responseJson) {
+          array.push(responseJson[trx]);
+        }
+        this.setState({trxs: array});
+      }
+    });
+  }
+  componentWillUnmount() {
+    this._isMounted = false;
+  }
+
+  searchQueryUpdated(text) {
+    this.setState({searchText: text})
+  }
+
+  render() {
+    const filteredTrx = this.state.trxs.filter(createFilter(this.state.searchText, KEYS_TO_FILTERS))
+    if (this.state.trxs.length === 0) {
+      return (
+        <View style={{flex: 1, paddingTop: 20}}>
+          <ActivityIndicator />
+        </View>
+      );
+    }
+
+    return (
+      <>
+        <StatusBar barStyle="dark-content" />
+        <View style={{flex: 1}}>
+          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            <Text>Cari</Text>
+            <TextInput
+              style={{flex: 1, height: 40, borderColor: 'gray', borderWidth: 1}}
+              // onChangeText={data => this.searchQuery(data)}
+              onChangeText={(text) => {this.searchQueryUpdated(text)}}
+            />
           </View>
-        </ScrollView>
-      </SafeAreaView>
-    </>
-  );
+          <View style={{flex: 1}}>
+            <ScrollView>
+              <Trxcard data={filteredTrx} />
+            </ScrollView>
+          </View>
+        </View>
+      </>
+    );
+  }
 };
 
 const styles = StyleSheet.create({
+  MainContainer: {
+    // Setting up View inside content in Vertically center.
+    margin: 10
+  },
   scrollView: {
     backgroundColor: Colors.lighter,
   },
@@ -108,7 +141,5 @@ const styles = StyleSheet.create({
     padding: 4,
     paddingRight: 12,
     textAlign: 'right',
-  },
+  }
 });
-
-export default App;
