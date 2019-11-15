@@ -29,6 +29,7 @@ import {
 } from 'react-native/Libraries/NewAppScreen';
 import SearchInput, { createFilter } from 'react-native-search-filter';
 import Trxcard from './component/card/trxcard';
+import Icon from 'react-native-vector-icons/dist/FontAwesome';
 
 const KEYS_TO_FILTERS = ['beneficiary_name'];
 
@@ -37,7 +38,8 @@ export default class App extends Component {
     super(props);
     this.state = {
       trxs:[],
-      searchText: ''
+      searchText: '',
+      isLoading: true
     }
   }
 
@@ -54,9 +56,10 @@ export default class App extends Component {
 
         let array = [];
         for (const trx in responseJson) {
+          if(responseJson[trx].status == "SUCCESS")
           array.push(responseJson[trx]);
         }
-        this.setState({trxs: array});
+        this.setState({trxs: array, isLoading: false});
       }
     });
   }
@@ -80,19 +83,23 @@ export default class App extends Component {
 
     return (
       <>
-        <StatusBar barStyle="dark-content" />
+        <StatusBar backgroundColor="#ffffff" barStyle="dark-content" />
         <View style={{flex: 1}}>
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <Text>Cari</Text>
+          <View style={styles.seacrchbar}>
+            <Icon style={{margin: 10}} name="search" size={25} color='#acacac' />
             <TextInput
-              style={{flex: 1, height: 40, borderColor: 'gray', borderWidth: 1}}
+              style={{flex: 1, height: 40}}
               // onChangeText={data => this.searchQuery(data)}
+              placeholder='Cari nama...'
               onChangeText={(text) => {this.searchQueryUpdated(text)}}
             />
           </View>
-          <View style={{flex: 1}}>
+          <View style={{flex: 1, margin: 10}}>
             <ScrollView>
-              <Trxcard data={filteredTrx} />
+              {filteredTrx.length === 0 ?
+              <Text style={styles.nodata}>Tidak ada data</Text>
+              :
+              <Trxcard data={filteredTrx} />}
             </ScrollView>
           </View>
         </View>
@@ -102,44 +109,20 @@ export default class App extends Component {
 };
 
 const styles = StyleSheet.create({
-  MainContainer: {
-    // Setting up View inside content in Vertically center.
-    margin: 10
+  seacrchbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    backgroundColor: '#ffffff'
+  },
+  nodata: {
+    width: '100%',
+    textAlign: 'center',
+    margin: 15,
+    fontSize: 16,
+    color: '#acacac'
   },
   scrollView: {
     backgroundColor: Colors.lighter,
-  },
-  engine: {
-    position: 'absolute',
-    right: 0,
-  },
-  body: {
-    backgroundColor: Colors.white,
-  },
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: Colors.black,
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-    color: Colors.dark,
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-  footer: {
-    color: Colors.dark,
-    fontSize: 12,
-    fontWeight: '600',
-    padding: 4,
-    paddingRight: 12,
-    textAlign: 'right',
   }
 });
